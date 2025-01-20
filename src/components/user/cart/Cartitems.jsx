@@ -19,11 +19,11 @@ const CartItems = () => {
   useEffect(() => {
     const fetchCartItems = async () => {
       const userId = sessionStorage.getItem('userId');
-      if (!userId) {
-        setError('Please login to view cart');
-        setLoading(false);
-        return;
-      }
+      // if (!userId) {
+      //   setError('Please login to view cart');
+      //   setLoading(false);
+      //   return;
+      // }
 
       try {
         // First fetch cart data
@@ -225,14 +225,13 @@ const CartItems = () => {
     );
   }
 
-
   // ------------------------------------------------------------------------
-  const handleCheckout = async () => {
+  const handleCheckout = async (event) => {
     const userId = sessionStorage.getItem('userId');
-    if (!userId) {
-      alert('Please log in to proceed.');
-      return;
-    }
+    // if (!userId) {
+    //   alert('Please log in to proceed.');
+    //   return;
+    // }
   
     // Transform cart data
     const transformedCartData = {
@@ -242,7 +241,7 @@ const CartItems = () => {
           quantity: item.quantity || 1
         }))
       },
-      redirect_url: 'https://your-domain.requestcatcher.com/?=anyparam=anyvalue&more=2',
+      redirect_url: 'https://your-redirect-url.com/?oid=62f3d76a087fb021ee1c8b0e&ost=SUCCESS',
       timestamp: new Date().toISOString()
     };
 
@@ -250,21 +249,46 @@ const CartItems = () => {
   
     try {
       // Send transformed data to the /shiprocketapi endpoint
-      const response = await fetch('http://localhost:5000/shiprocketapi', { 
+      const response = await fetch('https://checkout-api.shiprocket.com/api/v1/access-token/checkout', { 
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'X-Api-Key': 'F4ZJ0KzzTQw6M89A',
+          "X-Api-HMAC-SHA256": 'tMB/I2nDnjB9qTAPFsSg+Wk8dSYkEFXxN0ADoQ+75K8=',
+          "Content-Type": 'application/json',
         },
         body: JSON.stringify({
-          userId: userId, // Use the actual userId from sessionStorage
-          cart_data: transformedCartData.cart_data.items, // Send the transformed cart data
+          // userId: userId, // Use the actual userId from sessionStorage
+          // cart_data: transformedCartData.cart_data.items, // Send the transformed cart data
+          // transformedCartData
+
+          cart_data: transformedCartData.cart_data,
+          redirect_url: transformedCartData.redirect_url,
+          timestamp: transformedCartData.timestamp,
         })
       });
   
       const data = await response.json();
-      if (data.success) {
-        alert( data.token);
-        HeadlessCheckout.addToCart(event, data.token, {fallbackUrl: "https://checkout-ui.shiprocket.com/assets/styles/shopify.css"})
+
+
+      // var response1 = await fetch('https://checkout-api.shiprocket.com/api/v1/custom-platform-order/details', { 
+      //   method: 'POST',
+      //   headers: {
+      //     'token': data.token,
+      //     'X-Api-Key': 'H3E8hebrr7oZFnVV',
+      //     'X-Api-HMAC-SHA256': 'FYttb1JEV3KL0iaqcA30FkNE1665aPThcHX37J4sWvo=',
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     order_id: "65a000df3fc6c468b9da1f53",
+      //     timestamp: transformedCartData.timestamp,
+      //   })
+      // });
+  
+      // const data1 = await response1.json();
+      // alert("hello...");
+      if (data.ok) {
+        // alert(data.token);
+        window.HeadlessCheckout.addToCart(event, data.token, {fallbackUrl: "https://your.fallback.com?product=123"});
         // Redirect or update UI as needed
       } else {
         alert(`Failed to place order: ${data.message}`);
